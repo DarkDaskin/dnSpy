@@ -19,16 +19,16 @@ namespace dnSpy.HexInspector {
 			hexView.Caret.PositionChanged += OnCaretPositionChanged;
 		}
 
-		void OnHexViewClosed(object sender, EventArgs e) {
-			var hexView = (WpfHexView)sender;
+		void OnHexViewClosed(object? sender, EventArgs e) {
+			var hexView = (WpfHexView)sender!;
 			hexView.Closed -= OnHexViewClosed;
 			hexView.Buffer.Changed -= OnBufferChanged;
 			hexView.Caret.PositionChanged -= OnCaretPositionChanged;
 		}
 
-		void OnBufferChanged(object sender, HexContentChangedEventArgs e) => UpdateInspector();
+		void OnBufferChanged(object? sender, HexContentChangedEventArgs e) => UpdateInspector();
 
-		void OnCaretPositionChanged(object sender, HexCaretPositionChangedEventArgs e) => 
+		void OnCaretPositionChanged(object? sender, HexCaretPositionChangedEventArgs e) => 
 			UpdateInspector(e.HexView.Buffer, e.NewPosition.Position.ValuePosition.BufferPosition.Position);
 
 		void UpdateInspector() => contentProvider.Content.ViewModel.OnBufferChanged();

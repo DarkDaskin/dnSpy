@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:interpretations="clr-namespace:dnSpy.HexInspector.Interpretations"
     xmlns:local="clr-namespace:dnSpy.HexInspector"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DataContext="{d:DesignInstance local:HexInspectorViewModel}"
@@ -27,7 +28,7 @@
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
             <ItemsControl ItemsSource="{Binding Interpretations}">
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="local:HexInspectorViewModel+Interpretation">
+                    <DataTemplate DataType="interpretations:Interpretation">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
