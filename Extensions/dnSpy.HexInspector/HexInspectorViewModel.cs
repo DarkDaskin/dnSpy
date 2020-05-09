@@ -2,6 +2,9 @@ using System;
 using System.Buffers.Binary;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using dnSpy.Contracts.Hex;
 using dnSpy.Contracts.MVVM;
 using Microsoft.VisualStudio.Language.Intellisense;
@@ -10,8 +13,11 @@ namespace dnSpy.HexInspector {
 	public class HexInspectorViewModel : ViewModelBase {
 		HexBufferSpan hexBufferSpan;
 		ByteOrder byteOrder;
+		int encodingIndex = 0;
+		Encoding encoding;
 
 		public BulkObservableCollection<Interpretation> Interpretations { get; } = new BulkObservableCollection<Interpretation>();
+		public BulkObservableCollection<EncodingInfo> Encodings { get; } = new BulkObservableCollection<EncodingInfo>();
 
 		public HexBufferSpan HexBufferSpan {
 			get => hexBufferSpan;
@@ -33,19 +39,44 @@ namespace dnSpy.HexInspector {
 			}
 		}
 
-		public HexInspectorViewModel() =>
+		public int EncodingIndex {
+			get => encodingIndex;
+			set {
+				if (encodingIndex != value) {
+					encodingIndex = value;
+					encoding = Encodings[value].GetEncoding();
+					OnPropertyChanged(nameof(EncodingIndex));
+				}
+			}
+		}
+
+		public HexInspectorViewModel() {
 			Interpretations.AddRange(new Interpretation[] {
-				new UInt8Interpretation(this),
-				new Int8Interpretation(this),
-				new UInt16Interpretation(this),
+				new UInt8Interpretation(this), 
+				new Int8Interpretation(this), 
+				new UInt16Interpretation(this), 
 				new Int16Interpretation(this),
 				new UInt32Interpretation(this), 
-				new Int32Interpretation(this),
-				new UInt64Interpretation(this), 
+				new Int32Interpretation(this), 
+				new UInt64Interpretation(this),
 				new Int64Interpretation(this), 
 				new SingleInterpretation(this), 
-				new DoubleInterpretation(this), 
+				new DoubleInterpretation(this),
+				new BinaryInterpretation(this),
+				new GuidInterpretation(this),
+				new VarIntInterpretation(this),
+				new StringInterpretation(this),
 			});
+
+			var preferredCodePages = new[] {
+				Encoding.Default.CodePage,
+				Encoding.Unicode.CodePage,
+				Encoding.UTF8.CodePage,
+			};
+			var encodings = Encoding.GetEncodings().OrderByDescending(encoding => Array.IndexOf(preferredCodePages, encoding.CodePage));
+			Encodings.AddRange(encodings);
+			encoding = Encodings[encodingIndex].GetEncoding();
+		}
 
 		public void OnBufferChanged() => OnPropertyChanged(nameof(HexBufferSpan));
 		
@@ -66,6 +97,7 @@ namespace dnSpy.HexInspector {
 					if (this.value != value) {
 						this.value = value;
 						OnPropertyChanged(nameof(Value));
+						OnPropertyChanged(nameof(IsValid));
 
 						hasError = value != null ? !TryWriteValue(value) : CanWrite;
 						HasErrorUpdated();
@@ -74,7 +106,9 @@ namespace dnSpy.HexInspector {
 			}
 
 			public bool IsAvailable => ParentViewModel.HexBufferSpan.Length >= RequiredLength;
-			public bool CanWrite => Buffer != null && !Buffer.IsReadOnly && IsAvailable;
+			public virtual bool CanWrite => Buffer != null && !Buffer.IsReadOnly && IsAvailable;
+			public bool IsReadOnly => !CanWrite;
+			public bool IsValid => value != null;
 
 			protected HexBuffer? Buffer => ParentViewModel.HexBufferSpan.Buffer;
 			protected HexPosition StartPosition => ParentViewModel.HexBufferSpan.Start.Position;
@@ -86,7 +120,7 @@ namespace dnSpy.HexInspector {
 				ParentViewModel.PropertyChanged += OnParentViewModelPropertyChanged;
 			}
 
-			protected abstract string ReadValue();
+			protected abstract string? ReadValue();
 			protected abstract bool TryWriteValue(string value);
 
 			void OnParentViewModelPropertyChanged(object sender, PropertyChangedEventArgs e) {
@@ -94,9 +128,13 @@ namespace dnSpy.HexInspector {
 					OnPropertyChanged(nameof(IsAvailable));
 					OnPropertyChanged(nameof(CanWrite));
 				}
-				if (e.PropertyName == nameof(HexBufferSpan) || e.PropertyName == nameof(ByteOrder)) {
+
+				var dependsOnByteOrder = RequiredLength > 1;
+				var dependsOnEncoding = this is StringInterpretation;
+				if (e.PropertyName == nameof(HexBufferSpan) || dependsOnByteOrder && e.PropertyName == nameof(ByteOrder) || dependsOnEncoding && e.PropertyName == nameof(EncodingIndex)) {
 					value = IsAvailable ? ReadValue() : null;
 					OnPropertyChanged(nameof(Value));
+					OnPropertyChanged(nameof(IsValid));
 					hasError = false;
 					HasErrorUpdated();
 				}
@@ -295,7 +333,7 @@ namespace dnSpy.HexInspector {
 				}).ToString(CultureInfo.CurrentCulture);
 
 			protected override bool TryWriteValue(string value) {
-				if (long.TryParse(value, out var rawValue)) {
+				if (long.TryParse(value, NumberStyles.Integer | NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var rawValue)) {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
@@ -363,6 +401,115 @@ namespace dnSpy.HexInspector {
 				}
 				return false;
 			}
+		}
+
+		public class BinaryInterpretation : Interpretation {
+			protected override int RequiredLength => sizeof(byte);
+			public override string Name => "Binary (8-bit)";
+
+			public BinaryInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
+			}
+
+			protected override string ReadValue() {
+				var rawValue = Buffer!.ReadByte(StartPosition);
+#if NETCOREAPP3_1
+				Span<char> chars = stackalloc char[8];
+#else
+				var chars = new char[8];
+#endif
+				for (var i = 0; i < chars.Length; i++) {
+					chars[chars.Length - 1 - i] = (rawValue & (1 << i)) != 0 ? '1' : '0';
+				}
+				return new string(chars);
+			}
+
+			protected override bool TryWriteValue(string value) {
+				if (Regex.IsMatch(value, @"^[01]{1,8}$")) {
+					byte rawValue = 0;
+					for (var i = 0; i < value.Length; i++) {
+						rawValue |= (byte) (value[value.Length - 1 - i] == '1' ? 1 << i : 0);
+					}
+					Buffer!.Replace(StartPosition, rawValue);
+					return true;
+				}
+				return false;
+			}
+		}
+
+		public class GuidInterpretation : Interpretation {
+			protected override int RequiredLength => 16;
+			public override string Name => "GUID";
+
+			public GuidInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
+			}
+
+			protected override string ReadValue() {
+				var bytes = Buffer!.ReadBytes(StartPosition, RequiredLength);
+				if (NeedByteOrderSwap) {
+					Array.Reverse(bytes);
+				}
+				return new Guid(bytes).ToString();
+			}
+
+			protected override bool TryWriteValue(string value) {
+				if (Guid.TryParse(value, out var guidValue)) {
+					var bytes = guidValue.ToByteArray();
+					if (NeedByteOrderSwap) {
+						Array.Reverse(bytes);
+					}
+					Buffer!.Replace(StartPosition, bytes);
+					return true;
+				}
+				return false;
+			}
+		}
+
+		public class VarIntInterpretation : Interpretation {
+			protected override int RequiredLength => 1;
+			public override string Name => "VarInt";
+			public override bool CanWrite => false;
+
+			public VarIntInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
+			}
+
+			protected override string? ReadValue() {
+				var rawValue = 0;
+				var position = StartPosition;
+				var endPosition = ParentViewModel.HexBufferSpan.End.Position;
+				var bitOffset = 0;
+				while (bitOffset < 35 && position < endPosition) {
+					var b = Buffer!.ReadByte(position++);
+					rawValue |= (b & 0x7F) << bitOffset;
+					bitOffset += 7;
+					if ((b & 0x80) == 0)
+						return rawValue.ToString(CultureInfo.CurrentCulture);
+				}
+				return null;
+			}
+
+			protected override bool TryWriteValue(string value) => false;
+		}
+
+		public class StringInterpretation : Interpretation {
+			const int MAX_CHARS = 50;
+			static readonly char[] SPLIT_CHARS = {'\0', '\r', '\n', '�'};
+
+			protected override int RequiredLength => 1;
+			public override string Name => "String";
+			public override bool CanWrite => false;
+
+			public StringInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
+			}
+
+			protected override string ReadValue() {
+				var length = Math.Min((ulong)ParentViewModel.encoding.GetMaxByteCount(MAX_CHARS), ParentViewModel.HexBufferSpan.Length.ToUInt64());
+				var bytes = Buffer!.ReadBytes(StartPosition, length);
+				var str = ParentViewModel.encoding.GetString(bytes);
+				var splitIndex = str.IndexOfAny(SPLIT_CHARS);
+				return splitIndex >= 0 ? str.Remove(splitIndex) : str;
+			}
+
+			protected override bool TryWriteValue(string value) => false;
 		}
 	}
 }

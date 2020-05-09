@@ -14,6 +14,7 @@
 
         <Style BasedOn="{StaticResource {x:Type GroupBox}}" TargetType="GroupBox">
             <Setter Property="Foreground" Value="{DynamicResource DialogWindowForeground}" />
+            <Setter Property="Margin" Value="4" />
         </Style>
     </UserControl.Resources>
 
@@ -23,46 +24,60 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ItemsControl ItemsSource="{Binding Interpretations}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="local:HexInspectorViewModel+Interpretation">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
-                            <ColumnDefinition MinWidth="140" SharedSizeGroup="Value" />
-                        </Grid.ColumnDefinitions>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Interpretations}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="local:HexInspectorViewModel+Interpretation">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                                <!--  Width set to fit a GUID.  -->
+                                <ColumnDefinition Width="250" SharedSizeGroup="Value" />
+                            </Grid.ColumnDefinitions>
 
-                        <Label
-                            Grid.Column="0"
-                            Content="{Binding Name}"
-                            Target="{Binding ElementName=ValueTextBox}" />
-                        <TextBox
-                            Name="ValueTextBox"
-                            Grid.Column="1"
-                            local:InputBindingsManager.CommitOnEnter="TextBox.Text"
-                            IsEnabled="{Binding CanWrite}"
-                            Text="{Binding Value, TargetNullValue='Invalid', ValidatesOnDataErrors=True}" />
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Vertical" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-        </ItemsControl>
+                            <Label
+                                Grid.Column="0"
+                                Content="{Binding Name}"
+                                Target="{Binding ElementName=ValueTextBox}" />
+                            <TextBox
+                                Name="ValueTextBox"
+                                Grid.Column="1"
+                                local:InputBindingsManager.CommitOnEnter="TextBox.Text"
+                                IsEnabled="{Binding IsValid}"
+                                IsReadOnly="{Binding IsReadOnly}"
+                                MaxLines="1"
+                                Text="{Binding Value, TargetNullValue='Invalid', ValidatesOnDataErrors=True}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
 
-        <GroupBox Grid.Row="1" Header="Byte order">
-            <StackPanel Orientation="Horizontal">
-                <RadioButton
-                    Margin="0,0,8,0"
-                    Content="Little endian"
-                    IsChecked="{Binding ByteOrder, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ByteOrder.LittleEndian}}" />
-                <RadioButton
-                    Margin="0,0,8,0"
-                    Content="Big endian"
-                    IsChecked="{Binding ByteOrder, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ByteOrder.BigEndian}}" />
-            </StackPanel>
-        </GroupBox>
+        <WrapPanel Grid.Row="1" Orientation="Horizontal">
+            <GroupBox Header="Byte order">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton
+                        Margin="0,0,8,0"
+                        Content="Little endian"
+                        IsChecked="{Binding ByteOrder, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ByteOrder.LittleEndian}}" />
+                    <RadioButton
+                        Margin="0,0,8,0"
+                        Content="Big endian"
+                        IsChecked="{Binding ByteOrder, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ByteOrder.BigEndian}}" />
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="String encoding">
+                <ComboBox
+                    MinWidth="150"
+                    DisplayMemberPath="DisplayName"
+                    ItemsSource="{Binding Encodings}"
+                    SelectedIndex="{Binding EncodingIndex}" />
+            </GroupBox>
+        </WrapPanel>
     </Grid>
 </UserControl>
