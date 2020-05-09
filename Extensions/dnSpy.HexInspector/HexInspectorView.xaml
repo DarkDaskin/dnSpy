@@ -11,6 +11,10 @@
     mc:Ignorable="d">
     <UserControl.Resources>
         <local:ComparisonConverter x:Key="ComparisonConverter" />
+
+        <Style BasedOn="{StaticResource {x:Type GroupBox}}" TargetType="GroupBox">
+            <Setter Property="Foreground" Value="{DynamicResource DialogWindowForeground}" />
+        </Style>
     </UserControl.Resources>
 
     <Grid IsSharedSizeScope="True">
@@ -18,18 +22,14 @@
             <RowDefinition />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
 
-        <ItemsControl Grid.ColumnSpan="2" ItemsSource="{Binding Interpretations}">
+        <ItemsControl ItemsSource="{Binding Interpretations}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="local:HexInspectorViewModel+Interpretation">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                            <ColumnDefinition MinWidth="140" SharedSizeGroup="Value" />
                         </Grid.ColumnDefinitions>
 
                         <Label
@@ -45,12 +45,14 @@
                     </Grid>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
         </ItemsControl>
 
-        <GroupBox
-            Grid.Row="1"
-            Grid.ColumnSpan="2"
-            Header="Byte order">
+        <GroupBox Grid.Row="1" Header="Byte order">
             <StackPanel Orientation="Horizontal">
                 <RadioButton
                     Margin="0,0,8,0"

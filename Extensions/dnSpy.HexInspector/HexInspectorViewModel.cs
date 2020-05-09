@@ -74,9 +74,9 @@ namespace dnSpy.HexInspector {
 			}
 
 			public bool IsAvailable => ParentViewModel.HexBufferSpan.Length >= RequiredLength;
-			public bool CanWrite => !Buffer.IsReadOnly && IsAvailable;
+			public bool CanWrite => Buffer != null && !Buffer.IsReadOnly && IsAvailable;
 
-			protected HexBuffer Buffer => ParentViewModel.HexBufferSpan.Buffer;
+			protected HexBuffer? Buffer => ParentViewModel.HexBufferSpan.Buffer;
 			protected HexPosition StartPosition => ParentViewModel.HexBufferSpan.Start.Position;
 			protected ByteOrder ByteOrder => ParentViewModel.ByteOrder;
 			protected bool NeedByteOrderSwap => BitConverter.IsLittleEndian != (ByteOrder == ByteOrder.LittleEndian);
@@ -120,11 +120,11 @@ namespace dnSpy.HexInspector {
 			}
 
 			protected override string ReadValue() => 
-				Buffer.ReadByte(StartPosition).ToString(CultureInfo.CurrentCulture);
+				Buffer!.ReadByte(StartPosition).ToString(CultureInfo.CurrentCulture);
 
 			protected override bool TryWriteValue(string value) {
 				if (byte.TryParse(value, out var rawValue)) {
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -139,11 +139,11 @@ namespace dnSpy.HexInspector {
 			}
 
 			protected override string ReadValue() => 
-				Buffer.ReadSByte(StartPosition).ToString(CultureInfo.CurrentCulture);
+				Buffer!.ReadSByte(StartPosition).ToString(CultureInfo.CurrentCulture);
 
 			protected override bool TryWriteValue(string value) {
 				if (sbyte.TryParse(value, out var rawValue)) {
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -159,8 +159,8 @@ namespace dnSpy.HexInspector {
 
 			protected override string ReadValue() =>
 				(ByteOrder switch {
-					ByteOrder.LittleEndian => Buffer.ReadUInt16(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadUInt16BigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadUInt16(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadUInt16BigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -169,7 +169,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -185,8 +185,8 @@ namespace dnSpy.HexInspector {
 
 			protected override string ReadValue() =>
 				(ByteOrder switch {
-					ByteOrder.LittleEndian => Buffer.ReadInt16(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadInt16BigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadInt16(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadInt16BigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -195,7 +195,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -211,8 +211,8 @@ namespace dnSpy.HexInspector {
 
 			protected override string ReadValue() =>
 				(ByteOrder switch {
-					ByteOrder.LittleEndian => Buffer.ReadUInt32(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadUInt32BigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadUInt32(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadUInt32BigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -221,7 +221,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -237,8 +237,8 @@ namespace dnSpy.HexInspector {
 
 			protected override string ReadValue() =>
 				(ByteOrder switch {
-					ByteOrder.LittleEndian => Buffer.ReadInt32(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadInt32BigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadInt32(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadInt32BigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -247,7 +247,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -263,8 +263,8 @@ namespace dnSpy.HexInspector {
 
 			protected override string ReadValue() =>
 				(ByteOrder switch {
-					ByteOrder.LittleEndian => Buffer.ReadUInt64(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadUInt64BigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadUInt64(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadUInt64BigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -273,7 +273,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -289,8 +289,8 @@ namespace dnSpy.HexInspector {
 
 			protected override string ReadValue() =>
 				(ByteOrder switch {
-					ByteOrder.LittleEndian => Buffer.ReadInt64(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadInt64BigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadInt64(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadInt64BigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -299,7 +299,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -315,8 +315,8 @@ namespace dnSpy.HexInspector {
 
 			protected override string ReadValue() =>
 				(ByteOrder switch {
-					ByteOrder.LittleEndian => Buffer.ReadSingle(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadSingleBigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadSingle(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadSingleBigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -330,7 +330,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
@@ -347,8 +347,8 @@ namespace dnSpy.HexInspector {
 			protected override string ReadValue() =>
 				(ByteOrder switch
 				{
-					ByteOrder.LittleEndian => Buffer.ReadDouble(StartPosition),
-					ByteOrder.BigEndian => Buffer.ReadDoubleBigEndian(StartPosition),
+					ByteOrder.LittleEndian => Buffer!.ReadDouble(StartPosition),
+					ByteOrder.BigEndian => Buffer!.ReadDoubleBigEndian(StartPosition),
 					_ => throw new ArgumentOutOfRangeException()
 				}).ToString(CultureInfo.CurrentCulture);
 
@@ -358,7 +358,7 @@ namespace dnSpy.HexInspector {
 					if (NeedByteOrderSwap) {
 						rawValue = BinaryPrimitives.ReverseEndianness(rawValue);
 					}
-					Buffer.Replace(StartPosition, rawValue);
+					Buffer!.Replace(StartPosition, rawValue);
 					return true;
 				}
 				return false;
