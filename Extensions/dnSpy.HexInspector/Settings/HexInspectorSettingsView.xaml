@@ -20,7 +20,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Loaded="Grid_Loaded">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
