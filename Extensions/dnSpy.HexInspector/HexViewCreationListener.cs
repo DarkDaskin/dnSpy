@@ -15,15 +15,31 @@ namespace dnSpy.HexInspector {
 
 		public override void HexViewCreated(WpfHexView hexView) {
 			hexView.Closed += OnHexViewClosed;
-			hexView.Buffer.Changed += OnBufferChanged;
-			hexView.Caret.PositionChanged += OnCaretPositionChanged;
+			hexView.GotAggregateFocus += OnHexViewGotAggregateFocus;
+			hexView.LostAggregateFocus += OnHexViewLostAggregateFocus;
 		}
 
 		void OnHexViewClosed(object? sender, EventArgs e) {
 			var hexView = (WpfHexView)sender!;
 			hexView.Closed -= OnHexViewClosed;
+			hexView.GotAggregateFocus -= OnHexViewGotAggregateFocus;
+			hexView.LostAggregateFocus -= OnHexViewLostAggregateFocus;
+		}
+
+		void OnHexViewGotAggregateFocus(object? sender, EventArgs e) {
+			var hexView = (WpfHexView)sender!;
+			hexView.Buffer.Changed += OnBufferChanged;
+			hexView.Caret.PositionChanged += OnCaretPositionChanged;
+
+			UpdateInspector(hexView.Buffer, hexView.Caret.Position.Position.ValuePosition.BufferPosition.Position);
+		}
+
+		void OnHexViewLostAggregateFocus(object? sender, EventArgs e) {
+			var hexView = (WpfHexView)sender!;
 			hexView.Buffer.Changed -= OnBufferChanged;
 			hexView.Caret.PositionChanged -= OnCaretPositionChanged;
+
+			UpdateInspector(new HexBufferSpan());
 		}
 
 		void OnBufferChanged(object? sender, HexContentChangedEventArgs e) => UpdateInspector();
@@ -34,7 +50,10 @@ namespace dnSpy.HexInspector {
 		void UpdateInspector() => contentProvider.Content.ViewModel.OnBufferChanged();
 
 		void UpdateInspector(HexBuffer buffer, HexPosition position) =>
-			contentProvider.Content.ViewModel.HexBufferSpan = HexBufferSpan.FromBounds(
-				new HexBufferPoint(buffer, position), new HexBufferPoint(buffer, buffer.Span.End));
+			UpdateInspector(HexBufferSpan.FromBounds(
+				new HexBufferPoint(buffer, position), new HexBufferPoint(buffer, buffer.Span.End)));
+
+		void UpdateInspector(HexBufferSpan bufferSpan) =>
+			contentProvider.Content.ViewModel.HexBufferSpan = bufferSpan;
 	}
 }

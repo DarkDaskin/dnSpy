@@ -38,7 +38,8 @@ namespace dnSpy.HexInspector.Interpretations
 		public bool DependsOnEncoding => this is StringInterpretation;
 
 		protected HexBuffer? Buffer => ParentViewModel.HexBufferSpan.Buffer;
-		protected HexPosition StartPosition => ParentViewModel.HexBufferSpan.Start.Position;
+		protected HexPosition StartPosition => ParentViewModel.HexBufferSpan.Span.Start;
+		protected HexPosition EndPosition => ParentViewModel.HexBufferSpan.Span.End;
 		protected ByteOrder ByteOrder => ParentViewModel.ByteOrder;
 		protected bool NeedByteOrderSwap => BitConverter.IsLittleEndian != (ByteOrder == ByteOrder.LittleEndian);
 

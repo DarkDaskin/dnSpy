@@ -16,7 +16,7 @@ namespace dnSpy.HexInspector.Interpretations
 		protected override string? ReadValue() {
 			var rawValue = 0;
 			var position = StartPosition;
-			var endPosition = ParentViewModel.HexBufferSpan.End.Position;
+			var endPosition = EndPosition;
 			var bitOffset = 0;
 			while (bitOffset < 35 && position < endPosition) {
 				var b = Buffer!.ReadByte(position++);
