@@ -51,6 +51,8 @@ namespace dnSpy.HexInspector.Settings {
 		public BulkObservableCollection<InterpretationWithMetadata> EnabledInterpretations { get; } = 
 			new BulkObservableCollection<InterpretationWithMetadata>();
 
+		public ICommand EnableAllInterpretationsCommand { get; }
+		public ICommand DisableAllInterpretationsCommand { get; }
 		public ICommand EnableInterpretationCommand { get; }
 		public ICommand DisableInterpretationCommand { get; }
 		public ICommand MoveInterpretationUpCommand { get; }
@@ -59,6 +61,8 @@ namespace dnSpy.HexInspector.Settings {
 		IReadOnlyCollection<InterpretationWithMetadata> IHexInspectorSettings.EnabledInterpretations => EnabledInterpretations;
 
 		protected HexInspectorSettings() {
+			EnableAllInterpretationsCommand = new RelayCommand(EnableAllInterpretations, () => AvailableInterpretations.Any());
+			DisableAllInterpretationsCommand = new RelayCommand(DisableAllInterpretations, () => EnabledInterpretations.Any());
 			EnableInterpretationCommand = new RelayCommand<InterpretationWithMetadata>(EnableInterpretation);
 			DisableInterpretationCommand = new RelayCommand<InterpretationWithMetadata>(DisableInterpretation);
 			MoveInterpretationUpCommand = new RelayCommand<InterpretationWithMetadata>(
@@ -84,6 +88,15 @@ namespace dnSpy.HexInspector.Settings {
 			if (e.PropertyName == nameof(EncodingSelectorViewModel.Encoding)) {
 				DefaultCodePage = EncodingSelector!.Encoding.CodePage;
 			}
+		}
+		void EnableAllInterpretations() {
+			EnabledInterpretations.AddRange(AvailableInterpretations);
+			AvailableInterpretations.Clear();
+		}
+
+		void DisableAllInterpretations() {
+			AvailableInterpretations.AddRange(EnabledInterpretations);
+			EnabledInterpretations.Clear();
 		}
 
 		void EnableInterpretation(InterpretationWithMetadata interpretation) {

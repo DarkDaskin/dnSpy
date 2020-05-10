@@ -45,6 +45,8 @@ namespace dnSpy.HexInspector.Interpretations
 		protected Interpretation(HexInspectorViewModel parentViewModel) {
 			ParentViewModel = parentViewModel;
 			ParentViewModel.PropertyChanged += OnParentViewModelPropertyChanged;
+
+			UpdateValue();
 		}
 
 		protected abstract string? ReadValue();
@@ -57,12 +59,17 @@ namespace dnSpy.HexInspector.Interpretations
 			}
 
 			if (e.PropertyName == nameof(HexInspectorViewModel.HexBufferSpan) || DependsOnByteOrder && e.PropertyName == nameof(ByteOrder) || DependsOnEncoding && e.PropertyName == nameof(HexInspectorViewModel.Encoding)) {
-				value = IsAvailable ? ReadValue() : null;
-				OnPropertyChanged(nameof(Value));
-				OnPropertyChanged(nameof(IsValid));
-				hasError = false;
-				HasErrorUpdated();
+				UpdateValue();
 			}
+		}
+
+		void UpdateValue()
+		{
+			value = IsAvailable ? ReadValue() : null;
+			OnPropertyChanged(nameof(Value));
+			OnPropertyChanged(nameof(IsValid));
+			hasError = false;
+			HasErrorUpdated();
 		}
 
 		public override bool HasError => hasError;

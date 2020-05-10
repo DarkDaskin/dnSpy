@@ -39,6 +39,18 @@ namespace dnSpy.Contracts.MVVM {
 			this.canExec = canExec;
 		}
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="exec">Called when the command gets executed</param>
+		/// <param name="canExec">Gets called to check whether <paramref name="exec"/> can execute,
+		/// may be null</param>
+		public RelayCommand(Action exec, Func<bool>? canExec = null) {
+			if (exec is null) throw new ArgumentNullException(nameof(exec));
+			this.exec = _ => exec();
+			this.canExec = canExec == null ? default(Predicate<object?>) : _ => canExec!();
+		}
+
 		bool ICommand.CanExecute(object? parameter) => canExec is null || canExec(parameter);
 
 		event EventHandler? ICommand.CanExecuteChanged {

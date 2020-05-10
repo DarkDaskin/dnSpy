@@ -39,6 +39,7 @@
 
                             <Label
                                 Grid.Column="0"
+                                HorizontalAlignment="Right"
                                 Content="{Binding DisplayName}"
                                 Target="{Binding ElementName=ValueTextBox}" />
                             <TextBox

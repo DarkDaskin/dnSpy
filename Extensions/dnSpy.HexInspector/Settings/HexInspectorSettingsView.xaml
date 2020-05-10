@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dd="urn:gong-wpf-dragdrop"
     xmlns:local="clr-namespace:dnSpy.HexInspector"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:settings="clr-namespace:dnSpy.HexInspector.Settings"
@@ -70,6 +71,8 @@
                     Name="AvailableInterpretationsListBox"
                     Grid.Row="1"
                     Grid.Column="0"
+                    dd:DragDrop.IsDragSource="True"
+                    dd:DragDrop.IsDropTarget="True"
                     DisplayMemberPath="Metadata.DisplayName"
                     ItemsSource="{Binding AvailableInterpretations}" />
 
@@ -78,15 +81,23 @@
                     Grid.Column="1"
                     VerticalAlignment="Center">
                     <Button
+                        Command="{Binding EnableAllInterpretationsCommand}"
+                        Content="&gt;&gt;"
+                        ToolTip="Enable all" />
+                    <Button
                         Command="{Binding EnableInterpretationCommand}"
                         CommandParameter="{Binding SelectedItem, ElementName=AvailableInterpretationsListBox}"
-                        Content="&gt;&gt;"
-                        ToolTip="Enable" />
+                        Content="&gt;"
+                        ToolTip="Enable selected" />
                     <Button
                         Command="{Binding DisableInterpretationCommand}"
                         CommandParameter="{Binding SelectedItem, ElementName=EnabledInterpretationsListBox}"
+                        Content="&lt;"
+                        ToolTip="Disable selected" />
+                    <Button
+                        Command="{Binding DisableAllInterpretationsCommand}"
                         Content="&lt;&lt;"
-                        ToolTip="Disable" />
+                        ToolTip="Disable all" />
                 </StackPanel>
 
                 <Label
@@ -98,6 +109,8 @@
                     Name="EnabledInterpretationsListBox"
                     Grid.Row="1"
                     Grid.Column="2"
+                    dd:DragDrop.IsDragSource="True"
+                    dd:DragDrop.IsDropTarget="True"
                     DisplayMemberPath="Metadata.DisplayName"
                     ItemsSource="{Binding EnabledInterpretations}" />
 
@@ -109,12 +122,12 @@
                         Command="{Binding MoveInterpretationUpCommand}"
                         CommandParameter="{Binding SelectedItem, ElementName=EnabledInterpretationsListBox}"
                         Content="↑"
-                        ToolTip="Enable" />
+                        ToolTip="Move up" />
                     <Button
                         Command="{Binding MoveInterpretationDownCommand}"
                         CommandParameter="{Binding SelectedItem, ElementName=EnabledInterpretationsListBox}"
                         Content="↓"
-                        ToolTip="Disable" />
+                        ToolTip="Move down" />
                 </StackPanel>
             </Grid>
         </GroupBox>
