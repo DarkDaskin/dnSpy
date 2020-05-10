@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.Composition;
+using System.Windows;
 using dnSpy.Contracts.Hex;
 using dnSpy.Contracts.Hex.Editor;
 using Microsoft.VisualStudio.Text.Editor;
@@ -14,38 +15,50 @@ namespace dnSpy.HexInspector {
 		public HexViewCreationListener(ToolWindowContentProvider contentProvider) => this.contentProvider = contentProvider;
 
 		public override void HexViewCreated(WpfHexView hexView) {
-			hexView.Closed += OnHexViewClosed;
-			hexView.GotAggregateFocus += OnHexViewGotAggregateFocus;
-			hexView.LostAggregateFocus += OnHexViewLostAggregateFocus;
+			hexView.Closed += OnClosed;
+			hexView.VisualElement.IsVisibleChanged += OnIsVisibleChanged;
+
+			void OnClosed(object? sender, EventArgs e) {
+				hexView.Closed -= OnClosed;
+				hexView.VisualElement.IsVisibleChanged -= OnIsVisibleChanged;
+			}
+
+			void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) => OnHexViewVisibilityChanged(hexView);
 		}
 
-		void OnHexViewClosed(object? sender, EventArgs e) {
-			var hexView = (WpfHexView)sender!;
-			hexView.Closed -= OnHexViewClosed;
-			hexView.GotAggregateFocus -= OnHexViewGotAggregateFocus;
-			hexView.LostAggregateFocus -= OnHexViewLostAggregateFocus;
-		}
+		void OnHexViewVisibilityChanged(WpfHexView hexView) {
+			if (hexView.VisualElement.IsVisible) {
+				hexView.Buffer.Changed += OnBufferChanged;
+				hexView.Selection.SelectionChanged += OnSelectionChanged;
+				hexView.Caret.PositionChanged += OnCaretPositionChanged;
 
-		void OnHexViewGotAggregateFocus(object? sender, EventArgs e) {
-			var hexView = (WpfHexView)sender!;
-			hexView.Buffer.Changed += OnBufferChanged;
-			hexView.Caret.PositionChanged += OnCaretPositionChanged;
+				UpdateInspector(hexView.Buffer, hexView.Caret.Position.Position.ValuePosition.BufferPosition.Position);
+			}
+			else {
+				hexView.Buffer.Changed -= OnBufferChanged;
+				hexView.Selection.SelectionChanged -= OnSelectionChanged;
+				hexView.Caret.PositionChanged -= OnCaretPositionChanged;
 
-			UpdateInspector(hexView.Buffer, hexView.Caret.Position.Position.ValuePosition.BufferPosition.Position);
-		}
-
-		void OnHexViewLostAggregateFocus(object? sender, EventArgs e) {
-			var hexView = (WpfHexView)sender!;
-			hexView.Buffer.Changed -= OnBufferChanged;
-			hexView.Caret.PositionChanged -= OnCaretPositionChanged;
-
-			UpdateInspector(new HexBufferSpan());
+				UpdateInspector(new HexBufferSpan());
+			}
 		}
 
 		void OnBufferChanged(object? sender, HexContentChangedEventArgs e) => UpdateInspector();
 
-		void OnCaretPositionChanged(object? sender, HexCaretPositionChangedEventArgs e) => 
-			UpdateInspector(e.HexView.Buffer, e.NewPosition.Position.ValuePosition.BufferPosition.Position);
+		void OnSelectionChanged(object? sender, EventArgs e) {
+			var selection = (HexSelection)sender!;
+			if (selection.IsEmpty) {
+				UpdateInspector(selection.HexView.Buffer, selection.HexView.Caret.Position.Position.ValuePosition.BufferPosition);
+			}
+			else {
+				UpdateInspector(selection.StreamSelectionSpan);
+			}
+		}
+
+		void OnCaretPositionChanged(object? sender, HexCaretPositionChangedEventArgs e) {
+			if (!e.HexView.Selection.IsEmpty) return;
+			UpdateInspector(e.HexView.Buffer, e.NewPosition.Position.ValuePosition.BufferPosition);
+		}
 
 		void UpdateInspector() => contentProvider.Content.ViewModel.OnBufferChanged();
 
