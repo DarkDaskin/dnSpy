@@ -15,5 +15,13 @@ namespace dnSpy.HexInspector.Interpretations {
 		Guid,
 		VarInt,
 		String,
+		DateTime,
+		OleDate,
+		FileTime,
+		Timestamp32,
+		Timestamp64,
+		DosDate,
+		DosTime,
+		DosDateTime,
 	}
 }
