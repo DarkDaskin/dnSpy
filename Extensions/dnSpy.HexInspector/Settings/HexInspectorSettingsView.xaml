@@ -1,0 +1,122 @@
+<UserControl
+    x:Class="dnSpy.HexInspector.Settings.HexInspectorSettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:dnSpy.HexInspector"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:settings="clr-namespace:dnSpy.HexInspector.Settings"
+    d:DataContext="{d:DesignInstance settings:HexInspectorSettings}"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <local:ComparisonConverter x:Key="ComparisonConverter" />
+
+        <Style BasedOn="{StaticResource {x:Type Button}}" TargetType="Button">
+            <Setter Property="Margin" Value="8,4,8,4" />
+            <Setter Property="MinWidth" Value="20" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <GroupBox Grid.Row="0" Header="Default byte order">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton
+                    Margin="0,0,8,0"
+                    Content="Little endian"
+                    IsChecked="{Binding DefaultByteOrder, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ByteOrder.LittleEndian}}" />
+                <RadioButton
+                    Margin="0,0,8,0"
+                    Content="Big endian"
+                    IsChecked="{Binding DefaultByteOrder, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ByteOrder.BigEndian}}" />
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Grid.Row="1" Header="Default string encoding">
+            <ComboBox
+                MinWidth="150"
+                HorizontalAlignment="Stretch"
+                DisplayMemberPath="DisplayName"
+                ItemsSource="{Binding EncodingSelector.Encodings}"
+                SelectedIndex="{Binding EncodingSelector.SelectedIndex}" />
+        </GroupBox>
+
+        <GroupBox Grid.Row="2" Header="Interpretations">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Content="Available:"
+                    Target="{Binding ElementName=AvailableInterpretationsListBox}" />
+                <ListBox
+                    Name="AvailableInterpretationsListBox"
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    DisplayMemberPath="Metadata.DisplayName"
+                    ItemsSource="{Binding AvailableInterpretations}" />
+
+                <StackPanel
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    VerticalAlignment="Center">
+                    <Button
+                        Command="{Binding EnableInterpretationCommand}"
+                        CommandParameter="{Binding SelectedItem, ElementName=AvailableInterpretationsListBox}"
+                        Content="&gt;&gt;"
+                        ToolTip="Enable" />
+                    <Button
+                        Command="{Binding DisableInterpretationCommand}"
+                        CommandParameter="{Binding SelectedItem, ElementName=EnabledInterpretationsListBox}"
+                        Content="&lt;&lt;"
+                        ToolTip="Disable" />
+                </StackPanel>
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Content="Enabled:"
+                    Target="{Binding ElementName=EnabledInterpretationsListBox}" />
+                <ListBox
+                    Name="EnabledInterpretationsListBox"
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    DisplayMemberPath="Metadata.DisplayName"
+                    ItemsSource="{Binding EnabledInterpretations}" />
+
+                <StackPanel
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    VerticalAlignment="Center">
+                    <Button
+                        Command="{Binding MoveInterpretationUpCommand}"
+                        CommandParameter="{Binding SelectedItem, ElementName=EnabledInterpretationsListBox}"
+                        Content="↑"
+                        ToolTip="Enable" />
+                    <Button
+                        Command="{Binding MoveInterpretationDownCommand}"
+                        CommandParameter="{Binding SelectedItem, ElementName=EnabledInterpretationsListBox}"
+                        Content="↓"
+                        ToolTip="Disable" />
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</UserControl>

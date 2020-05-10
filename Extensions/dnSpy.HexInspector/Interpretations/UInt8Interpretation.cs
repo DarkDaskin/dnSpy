@@ -1,11 +1,14 @@
+using System.ComponentModel.Composition;
 using System.Globalization;
 
 namespace dnSpy.HexInspector.Interpretations
 {
+	[ExportInterpretation(InterpretationType.UInt8)]
 	public class UInt8Interpretation : Interpretation {
 		protected override int RequiredLength => sizeof(byte);
-		public override string Name => "UInt8";
+		public override string Name => nameof(InterpretationType.UInt8);
 
+		[ImportingConstructor]
 		public UInt8Interpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
 		}
 

@@ -1,19 +1,22 @@
-using System;
+using System.ComponentModel;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
 using dnSpy.Contracts.Hex;
 using dnSpy.Contracts.MVVM;
 using dnSpy.HexInspector.Interpretations;
+using dnSpy.HexInspector.Settings;
 using Microsoft.VisualStudio.Language.Intellisense;
 
 namespace dnSpy.HexInspector {
-	public class HexInspectorViewModel : ViewModelBase {
+	[Export]
+	public class HexInspectorViewModel : ViewModelBase, IPartImportsSatisfiedNotification {
+		readonly IHexInspectorSettings settings;
 		HexBufferSpan hexBufferSpan;
 		ByteOrder byteOrder;
-		int encodingIndex = 0;
 
 		public BulkObservableCollection<Interpretation> Interpretations { get; } = new BulkObservableCollection<Interpretation>();
-		public BulkObservableCollection<EncodingInfo> Encodings { get; } = new BulkObservableCollection<EncodingInfo>();
+		public EncodingSelectorViewModel EncodingSelector { get; }
 
 		public HexBufferSpan HexBufferSpan {
 			get => hexBufferSpan;
@@ -35,48 +38,44 @@ namespace dnSpy.HexInspector {
 			}
 		}
 
-		public int EncodingIndex {
-			get => encodingIndex;
-			set {
-				if (encodingIndex != value) {
-					encodingIndex = value;
-					Encoding = Encodings[value].GetEncoding();
-					OnPropertyChanged(nameof(EncodingIndex));
-					OnPropertyChanged(nameof(Encoding));
-				}
+		public bool IsByteOrderSelectorVisible => Interpretations.Any(i => i.DependsOnByteOrder);
+		public bool IsEncodingSelectorVisible => Interpretations.Any(i => i.DependsOnEncoding);
+
+		internal Encoding Encoding => EncodingSelector.Encoding;
+
+		[ImportingConstructor]
+		public HexInspectorViewModel(IHexInspectorSettings settings) {
+			this.settings = settings;
+
+			byteOrder = settings.DefaultByteOrder;
+
+			EncodingSelector = new EncodingSelectorViewModel(settings.DefaultCodePage);
+			EncodingSelector.PropertyChanged += OnEncodingSelectorPropertyChanged;
+
+			settings.PropertyChanged += OnSettingsPropertyChanged;
+		}
+
+		void OnSettingsPropertyChanged(object sender, PropertyChangedEventArgs e) {
+			if (e.PropertyName == nameof(IHexInspectorSettings.EnabledInterpretations)) {
+				Interpretations.Clear();
+				InitInterpretations();
 			}
 		}
 
-		internal Encoding Encoding { get; private set; }
+		void InitInterpretations() {
+			Interpretations.AddRange(settings.EnabledInterpretations.Select(lazy => lazy.Value));
+			OnPropertyChanged(nameof(IsByteOrderSelectorVisible));
+			OnPropertyChanged(nameof(IsEncodingSelectorVisible));
+		}
 
-		public HexInspectorViewModel() {
-			Interpretations.AddRange(new Interpretation[] {
-				new UInt8Interpretation(this), 
-				new Int8Interpretation(this), 
-				new UInt16Interpretation(this), 
-				new Int16Interpretation(this),
-				new UInt32Interpretation(this), 
-				new Int32Interpretation(this), 
-				new UInt64Interpretation(this),
-				new Int64Interpretation(this), 
-				new SingleInterpretation(this), 
-				new DoubleInterpretation(this),
-				new BinaryInterpretation(this),
-				new GuidInterpretation(this),
-				new VarIntInterpretation(this),
-				new StringInterpretation(this),
-			});
-
-			var preferredCodePages = new[] {
-				Encoding.Default.CodePage,
-				Encoding.Unicode.CodePage,
-				Encoding.UTF8.CodePage,
-			};
-			var encodings = Encoding.GetEncodings().OrderByDescending(encoding => Array.IndexOf(preferredCodePages, encoding.CodePage));
-			Encodings.AddRange(encodings);
-			Encoding = Encodings[encodingIndex].GetEncoding();
+		void OnEncodingSelectorPropertyChanged(object sender, PropertyChangedEventArgs e) {
+			if (e.PropertyName == nameof(EncodingSelectorViewModel.Encoding))
+				OnPropertyChanged(nameof(Encoding));
 		}
 
 		public void OnBufferChanged() => OnPropertyChanged(nameof(HexBufferSpan));
+
+		// Delay initialization to break circular dependencies.
+		public void OnImportsSatisfied() => InitInterpretations();
 	}
 }

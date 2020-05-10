@@ -1,15 +1,18 @@
 using System;
+using System.ComponentModel.Composition;
 
 namespace dnSpy.HexInspector.Interpretations
 {
+	[ExportInterpretation(InterpretationType.String)]
 	public class StringInterpretation : Interpretation {
 		const int MAX_CHARS = 50;
 		static readonly char[] SPLIT_CHARS = {'\0', '\r', '\n', '�'};
 
 		protected override int RequiredLength => 1;
-		public override string Name => "String";
+		public override string Name => nameof(InterpretationType.String);
 		public override bool CanWrite => false;
 
+		[ImportingConstructor]
 		public StringInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
 		}
 

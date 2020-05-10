@@ -1,12 +1,18 @@
 using System;
+using System.ComponentModel.Composition;
 using System.Text.RegularExpressions;
 
 namespace dnSpy.HexInspector.Interpretations
 {
+	[ExportInterpretation(InterpretationType.Binary, DisplayName = DISPLAY_NAME)]
 	public class BinaryInterpretation : Interpretation {
-		protected override int RequiredLength => sizeof(byte);
-		public override string Name => "Binary (8-bit)";
+		const string DISPLAY_NAME = "Binary (8-bit)";
 
+		protected override int RequiredLength => sizeof(byte);
+		public override string Name => nameof(InterpretationType.Binary);
+		public override string DisplayName => DISPLAY_NAME;
+
+		[ImportingConstructor]
 		public BinaryInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
 		}
 

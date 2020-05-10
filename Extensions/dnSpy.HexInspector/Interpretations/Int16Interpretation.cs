@@ -1,19 +1,21 @@
 using System;
 using System.Buffers.Binary;
+using System.ComponentModel.Composition;
 using System.Globalization;
 
 namespace dnSpy.HexInspector.Interpretations
 {
+	[ExportInterpretation(InterpretationType.Int16)]
 	public class Int16Interpretation : Interpretation {
 		protected override int RequiredLength => sizeof(short);
-		public override string Name => "Int16";
+		public override string Name => nameof(InterpretationType.Int16);
 
+		[ImportingConstructor]
 		public Int16Interpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
 		}
 
 		protected override string ReadValue() =>
-			(ByteOrder switch
-			{
+			(ByteOrder switch {
 				ByteOrder.LittleEndian => Buffer!.ReadInt16(StartPosition),
 				ByteOrder.BigEndian => Buffer!.ReadInt16BigEndian(StartPosition),
 				_ => throw new ArgumentOutOfRangeException()

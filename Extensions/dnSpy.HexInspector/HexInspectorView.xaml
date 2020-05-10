@@ -12,6 +12,7 @@
     mc:Ignorable="d">
     <UserControl.Resources>
         <local:ComparisonConverter x:Key="ComparisonConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
         <Style BasedOn="{StaticResource {x:Type GroupBox}}" TargetType="GroupBox">
             <Setter Property="Foreground" Value="{DynamicResource DialogWindowForeground}" />
@@ -38,7 +39,7 @@
 
                             <Label
                                 Grid.Column="0"
-                                Content="{Binding Name}"
+                                Content="{Binding DisplayName}"
                                 Target="{Binding ElementName=ValueTextBox}" />
                             <TextBox
                                 Name="ValueTextBox"
@@ -60,7 +61,7 @@
         </ScrollViewer>
 
         <WrapPanel Grid.Row="1" Orientation="Horizontal">
-            <GroupBox Header="Byte order">
+            <GroupBox Header="Byte order" Visibility="{Binding IsByteOrderSelectorVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton
                         Margin="0,0,8,0"
@@ -72,12 +73,12 @@
                         IsChecked="{Binding ByteOrder, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ByteOrder.BigEndian}}" />
                 </StackPanel>
             </GroupBox>
-            <GroupBox Header="String encoding">
+            <GroupBox Header="String encoding" Visibility="{Binding IsEncodingSelectorVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ComboBox
                     MinWidth="150"
                     DisplayMemberPath="DisplayName"
-                    ItemsSource="{Binding Encodings}"
-                    SelectedIndex="{Binding EncodingIndex}" />
+                    ItemsSource="{Binding EncodingSelector.Encodings}"
+                    SelectedIndex="{Binding EncodingSelector.SelectedIndex}" />
             </GroupBox>
         </WrapPanel>
     </Grid>

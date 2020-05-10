@@ -24,7 +24,7 @@ namespace dnSpy.Contracts.MVVM {
 	/// <summary>
 	/// Implements the <see cref="ICommand"/> interface
 	/// </summary>
-	public sealed class RelayCommand : ICommand {
+	public class RelayCommand : ICommand {
 		readonly Action<object?> exec;
 		readonly Predicate<object?>? canExec;
 
@@ -39,7 +39,7 @@ namespace dnSpy.Contracts.MVVM {
 			this.canExec = canExec;
 		}
 
-		bool ICommand.CanExecute(object? parameter) => canExec is null ? true : canExec(parameter);
+		bool ICommand.CanExecute(object? parameter) => canExec is null || canExec(parameter);
 
 		event EventHandler? ICommand.CanExecuteChanged {
 			add => CommandManager.RequerySuggested += value;
@@ -47,5 +47,31 @@ namespace dnSpy.Contracts.MVVM {
 		}
 
 		void ICommand.Execute(object? parameter) => exec(parameter);
+	}
+
+	/// <summary>
+	/// Implements the <see cref="ICommand"/> interface with a strongly-typed parameter.
+	/// </summary>
+	/// <typeparam name="TParameter">The type of command parameter.</typeparam>
+	public class RelayCommand<TParameter> : RelayCommand {
+		/// <inheritdoc />
+		/// <remarks>When passed parameter is not a <typeparamref name="TParameter"/>,
+		/// <paramref name="exec"/> and <paramref name="canExec"/> are not called,
+		/// and <see cref="ICommand.CanExecute"/> returns <c>false</c>.</remarks>
+		public RelayCommand(Action<TParameter> exec, Predicate<TParameter>? canExec = null)
+			: base(MakeExecute(exec), MakeCanExecute(canExec)) {
+		}
+
+		static Action<object?> MakeExecute(Action<TParameter> exec) {
+			if(exec is null) throw new ArgumentNullException(nameof(exec));
+			return p => {
+				if (p is TParameter parameter) exec(parameter);
+			};
+		}
+
+		static Predicate<object?>? MakeCanExecute(Predicate<TParameter>? canExec) {
+			if (canExec is null) return p => p is TParameter;
+			return p => p is TParameter parameter && canExec(parameter);
+		}
 	}
 }

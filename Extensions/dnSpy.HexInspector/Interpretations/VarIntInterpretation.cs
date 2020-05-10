@@ -1,12 +1,15 @@
+using System.ComponentModel.Composition;
 using System.Globalization;
 
 namespace dnSpy.HexInspector.Interpretations
 {
+	[ExportInterpretation(InterpretationType.VarInt)]
 	public class VarIntInterpretation : Interpretation {
 		protected override int RequiredLength => 1;
-		public override string Name => "VarInt";
+		public override string Name => nameof(InterpretationType.VarInt);
 		public override bool CanWrite => false;
 
+		[ImportingConstructor]
 		public VarIntInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
 		}
 

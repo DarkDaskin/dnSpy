@@ -1,11 +1,17 @@
 using System;
+using System.ComponentModel.Composition;
 
 namespace dnSpy.HexInspector.Interpretations
 {
+	[ExportInterpretation(InterpretationType.Guid, DisplayName = DISPLAY_NAME)]
 	public class GuidInterpretation : Interpretation {
-		protected override int RequiredLength => 16;
-		public override string Name => "GUID";
+		const string DISPLAY_NAME = "GUID";
 
+		protected override int RequiredLength => 16;
+		public override string Name => nameof(InterpretationType.Guid);
+		public override string DisplayName => DISPLAY_NAME;
+
+		[ImportingConstructor]
 		public GuidInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
 		}
 

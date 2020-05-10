@@ -18,10 +18,7 @@ namespace dnSpy.HexInspector {
 		public override Guid Guid => THE_GUID;
 		public override string Title => "Hex inspector";
 
-		public HexInspectorToolWindowContent() {
-			view = new HexInspectorView();
-			ViewModel = new HexInspectorViewModel();
-			view.DataContext = ViewModel;
-		}
+		public HexInspectorToolWindowContent(HexInspectorViewModel viewModel) => 
+			view = new HexInspectorView {DataContext = ViewModel = viewModel};
 	}
 }

@@ -7,9 +7,13 @@ using dnSpy.Contracts.ToolWindows.App;
 namespace dnSpy.HexInspector {
 	[Export, Export(typeof(IToolWindowContentProvider))]
 	public class ToolWindowContentProvider : IToolWindowContentProvider {
+		readonly Lazy<HexInspectorViewModel> viewModel;
 		HexInspectorToolWindowContent? content;
 
-		public HexInspectorToolWindowContent Content => content ??= new HexInspectorToolWindowContent();
+		public HexInspectorToolWindowContent Content => content ??= new HexInspectorToolWindowContent(viewModel.Value);
+
+		[ImportingConstructor]
+		public ToolWindowContentProvider(Lazy<HexInspectorViewModel> viewModel) => this.viewModel = viewModel;
 
 		public ToolWindowContent? GetOrCreate(Guid guid) {
 			if (guid == HexInspectorToolWindowContent.THE_GUID) {

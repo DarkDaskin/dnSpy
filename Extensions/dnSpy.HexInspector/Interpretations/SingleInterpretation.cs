@@ -1,19 +1,21 @@
 using System;
 using System.Buffers.Binary;
+using System.ComponentModel.Composition;
 using System.Globalization;
 
 namespace dnSpy.HexInspector.Interpretations
 {
+	[ExportInterpretation(InterpretationType.Single)]
 	public class SingleInterpretation : Interpretation {
 		protected override int RequiredLength => sizeof(float);
-		public override string Name => "Single";
+		public override string Name => nameof(InterpretationType.Single);
 
+		[ImportingConstructor]
 		public SingleInterpretation(HexInspectorViewModel parentViewModel) : base(parentViewModel) {
 		}
 
 		protected override string ReadValue() =>
-			(ByteOrder switch
-			{
+			(ByteOrder switch {
 				ByteOrder.LittleEndian => Buffer!.ReadSingle(StartPosition),
 				ByteOrder.BigEndian => Buffer!.ReadSingleBigEndian(StartPosition),
 				_ => throw new ArgumentOutOfRangeException()
@@ -22,7 +24,7 @@ namespace dnSpy.HexInspector.Interpretations
 		protected override bool TryWriteValue(string value) {
 			if (float.TryParse(value, out var floatValue)) {
 #if NETCOREAPP3_1
-					var rawValue = BitConverter.SingleToInt32Bits(floatValue);
+				var rawValue = BitConverter.SingleToInt32Bits(floatValue);
 #else
 				var rawValue = BitConverter.ToInt32(BitConverter.GetBytes(floatValue), 0);
 #endif

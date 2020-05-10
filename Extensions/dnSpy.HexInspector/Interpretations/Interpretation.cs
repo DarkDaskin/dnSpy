@@ -13,6 +13,7 @@ namespace dnSpy.HexInspector.Interpretations
 
 		protected abstract int RequiredLength { get; }
 		public abstract string Name { get; }
+		public virtual string DisplayName => Name;
 
 
 		public string? Value {
@@ -33,6 +34,8 @@ namespace dnSpy.HexInspector.Interpretations
 		public virtual bool CanWrite => Buffer != null && !Buffer.IsReadOnly && IsAvailable;
 		public bool IsReadOnly => !CanWrite;
 		public bool IsValid => value != null;
+		public bool DependsOnByteOrder => RequiredLength > 1;
+		public bool DependsOnEncoding => this is StringInterpretation;
 
 		protected HexBuffer? Buffer => ParentViewModel.HexBufferSpan.Buffer;
 		protected HexPosition StartPosition => ParentViewModel.HexBufferSpan.Start.Position;
@@ -53,9 +56,7 @@ namespace dnSpy.HexInspector.Interpretations
 				OnPropertyChanged(nameof(CanWrite));
 			}
 
-			var dependsOnByteOrder = RequiredLength > 1;
-			var dependsOnEncoding = this is StringInterpretation;
-			if (e.PropertyName == nameof(HexInspectorViewModel.HexBufferSpan) || dependsOnByteOrder && e.PropertyName == nameof(ByteOrder) || dependsOnEncoding && e.PropertyName == nameof(HexInspectorViewModel.Encoding)) {
+			if (e.PropertyName == nameof(HexInspectorViewModel.HexBufferSpan) || DependsOnByteOrder && e.PropertyName == nameof(ByteOrder) || DependsOnEncoding && e.PropertyName == nameof(HexInspectorViewModel.Encoding)) {
 				value = IsAvailable ? ReadValue() : null;
 				OnPropertyChanged(nameof(Value));
 				OnPropertyChanged(nameof(IsValid));
